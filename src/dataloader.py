@@ -37,8 +37,6 @@ class CubImageDataset(Dataset):
         sample = self.data.iloc[idx]
         path = os.path.join(self.root_dir, 'CUB_200_2011', 'images', sample[1])
         image = Image.open(path)
-        plt.imshow(image)
-        plt.show()
         if self.transform:
             image = self.transform(image)
         label = sample[2] - 1 # make labels start from index 0
