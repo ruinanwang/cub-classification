@@ -42,7 +42,4 @@ class CubImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         label = sample[2] - 1 # make labels start from index 0
-        plt.imshow(image.permute(1,2,0))
-        plt.show()
-        print(image.shape)
         return image, label
