@@ -10,7 +10,7 @@ class FinetunedAlexNet(nn.Module):
     self.model = alexnet(pretrained=True)
     self.model.classifier[6] = nn.Linear(4096, 200)
     
-    for param in self.model.classifier.parameters():
+    for param in self.model.features.parameters():
         param.requires_grad = False
     for param in self.model.avgpool.parameters():
         param.requires_grad = False
@@ -27,3 +27,7 @@ class FinetunedAlexNet(nn.Module):
 
     output = self.model(x)
     return output
+
+  def unfreezeAll(self):
+    for param in self.model.parameters():
+        param.requires_grad = True

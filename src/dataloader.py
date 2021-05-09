@@ -4,6 +4,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 import matplotlib.pyplot as plt
+from torchvision.datasets.folder import default_loader
 
 class CubImageDataset(Dataset):
     def __init__(self, root_dir, train_val_test_mode, transform=None):
@@ -36,7 +37,8 @@ class CubImageDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.data.iloc[idx]
         path = os.path.join(self.root_dir, 'CUB_200_2011', 'images', sample[1])
-        image = Image.open(path)
+        image = default_loader(path)
+#         print(image.size)
         if self.transform:
             image = self.transform(image)
         label = sample[2] - 1 # make labels start from index 0
