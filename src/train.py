@@ -9,7 +9,7 @@ from torchvision import transforms
 
 from finetuned_alexnet import FinetunedAlexNet
 
-start_unfreeze_epoch = 7
+start_unfreeze_epoch = 1
 
 def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
     model = FinetunedAlexNet()
@@ -37,7 +37,7 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
         
         if epoch == start_unfreeze_epoch:
             model.unfreezeAll()
-            optimizer = optim.Adam(squeezenet.parameters(), lr=4e-5)
+            optimizer = optim.Adam(model.parameters(), lr=4e-5)
             
         model.train()
         print(f"Epoch {epoch+1}")
