@@ -29,5 +29,6 @@ def test(m, dir, batch_size):
         test_acc += accuracy_score(y.data.cpu().numpy(), y_pred, normalize=False)
         prediction = np.concatenate(prediction, y_pred)
     test_acc /= len(test_dataset)
+    
     print(f"TEST Accuracy: {test_acc}")
     return prediction
