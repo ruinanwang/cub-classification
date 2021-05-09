@@ -7,15 +7,21 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 from torchvision import transforms
 
-def test(m, dir, batch_size):
-    model = m
-    model.load_state_dict(torch.load('best_xxx.pt'))
+from finetuned_alexnet import FinetunedAlexNet
+
+def test(data_dir="../data", save_dir="../save/", batch_size=64):
+    model = FineTunedAlexNet()
+    model.load_state_dict(torch.load(save_dir+'best_alexnet_baseline.pt'))
     model.cuda()
     model.eval()
 
-    test_transform = transforms(xxx)
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+#         transforms.Normalize(mean=mean, std=std),
+        transforms.Resize((386, 468)),
+    ])
 
-    test_dataset = dataloader.CubImageDataset(dir, 2, transform=test_transform)
+    test_dataset = dataloader.CubImageDataset(data_dir, 2, transform=test_transform)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
     test_acc = 0.0
@@ -32,3 +38,6 @@ def test(m, dir, batch_size):
     
     print(f"TEST Accuracy: {test_acc}")
     return prediction
+
+if __name__ == '__main__':
+    test()

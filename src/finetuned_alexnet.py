@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.models import alexnet
+from torchvision.models import resnet18
 
 class FinetunedAlexNet(nn.Module):
   def __init__(self):
@@ -31,3 +32,17 @@ class FinetunedAlexNet(nn.Module):
   def unfreezeAll(self):
     for param in self.model.parameters():
         param.requires_grad = True
+        
+class FinetunedResNet(nn.Module):
+  
+    # constructor
+    def __init__(self):
+        super().__init__()
+        self.model = resnet18(pretrained=True)
+        last_layer_inputs = self.model.fc.in_features
+        self.model.fc = nn.Linear(last_layer_inputs, 200)  
+#         self.model.to(device)
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
