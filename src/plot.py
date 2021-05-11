@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 def plot(train_loss_list, train_acc_list, valid_loss_list, valid_acc_list, save_dir):
     plt.title("Loss")
     plt.plot(train_loss_list, label='Train Loss', color='green')

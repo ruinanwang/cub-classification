@@ -29,10 +29,19 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
+    
+    mean=[0.485, 0.456, 0.406]
+    std=[0.229, 0.224, 0.225]
 
-    train_dataset = dataloader.CubImageDataset(data_dir, 0, transform=transformation_train)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size)
-    valid_dataset = dataloader.CubImageDataset(data_dir, 1, transform=transformation_valid)
+    train_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std),
+        transforms.Resize((386, 468)),
+    ])
+
+    train_dataset = dataloader.CubImageDataset(data_dir, 0, transform=train_transform)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    valid_dataset = dataloader.CubImageDataset(data_dir, 1, transform=train_transform)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size)
     
     model = FinetunedResNet()
@@ -48,6 +57,7 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
         print(f"Epoch {epoch+1}")
         train_loss = 0
         train_acc = 0
+#         min_label_predicted = 10000
         for i, data in enumerate(train_loader):
             x, y = data
             x = x.cuda()
@@ -61,6 +71,10 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
             optimizer.step()
             
             pred = torch.max(pred,1)[1]
+#             if min(pred) < min_label_predicted:
+#                 min_label_predicted = min(pred)
+#                 print(min_label_predicted)
+#             print(pred)
             
             train_loss += loss.item()
             train_acc += torch.sum( pred == y )
@@ -95,7 +109,7 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
         if valid_acc > best_valid_acc:
             print(f"New best validation accuracy ({best_valid_acc} -> {valid_acc})")
             print("Saving model")
-            torch.save(model.state_dict(), save_dir +'best_alexnet_baseline.pt')
+            torch.save(model.state_dict(), save_dir +'best_resnet_baseline.pt')
             print("Saved")
             best_valid_acc = valid_acc
     print("Finished Training")

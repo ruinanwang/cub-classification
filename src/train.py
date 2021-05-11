@@ -71,8 +71,9 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
             x, y = data
             x = x.cuda()
             y = y.cuda()
-            optimizer.zero_grad()
+
             pred = model(x)
+#             print(pred.dtype, pred.shape, y.dtype, y.shape)
             
             
             loss = criterion(pred, y)
