@@ -10,19 +10,33 @@ from torchvision import transforms
 from finetuned_alexnet import FinetunedAlexNet
 from finetuned_alexnet import FinetunedResNet
 
-def test(data_dir="../data", save_dir="../save/", batch_size=64):
+import argparse
+
+parser = argparse.ArgumentParser(description='PUB training args')
+parser.add_argument("-n", type=str, required=True)
+args = parser.parse_args()
+
+def test(args, data_dir="../data", save_dir="../save/", batch_size=64):
     model = FinetunedAlexNet()
 #     model = FinetunedResNet()
-    model.load_state_dict(torch.load(save_dir+'best_alexnet_baseline.pt'))
+    model.load_state_dict(torch.load(save_dir + args.n + '.pt'))
     model.cuda()
     model.eval()
 
+#     test_transform = transforms.Compose([
+#         transforms.ToTensor(),
+#         transforms.Resize((386, 468)),
+#     ])
+    mean=[0.485, 0.456, 0.406]
+    std=[0.229, 0.224, 0.225]
+    
     test_transform = transforms.Compose([
-        transforms.ToTensor(),
         transforms.Resize((386, 468)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std)
     ])
 
-    test_dataset = dataloader.CubImageDataset(data_dir, 2, transform=test_transform)
+    test_dataset = dataloader.CubImageDataset(data_dir, 2, False, transform=test_transform)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     test_acc = 0.0
@@ -40,4 +54,4 @@ def test(data_dir="../data", save_dir="../save/", batch_size=64):
     return prediction
 
 if __name__ == '__main__':
-    test()
+    test(args)

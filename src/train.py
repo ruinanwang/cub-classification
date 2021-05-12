@@ -10,12 +10,20 @@ from torchvision import transforms
 from finetuned_alexnet import FinetunedAlexNet
 from finetuned_alexnet import FinetunedResNet
 
-from plot import plot
+from plot import *
+
+import argparse
+
+parser = argparse.ArgumentParser(description='PUB training args')
+parser.add_argument("-n", type=str, required=True)
+args = parser.parse_args()
+
 
 start_unfreeze_epoch = 7
 
-def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
-    model = FinetunedAlexNet()
+def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
+#     model = FinetunedAlexNet()
+    model = FinetunedResNet()
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
@@ -24,11 +32,20 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
     std=[0.229, 0.224, 0.225]
 
     train_transform = transforms.Compose([
+        transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(15),
+        transforms.Resize((386, 468)),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std),
-        transforms.Resize((386, 468)),
     ])
-    ##
+    
+    valid_transform = transforms.Compose([
+        transforms.Resize((386, 468)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std),
+    ])
+
 #     transformation_train = transforms.Compose([
 #         transforms.Resize((256,256)),
 #         transforms.RandomHorizontalFlip(),
@@ -44,10 +61,10 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
 #         transforms.ToTensor(),
 #         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 #     ])
-    ##
-    train_dataset = dataloader.CubImageDataset(data_dir, 0, transform=train_transform)
+
+    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=train_transform)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_dataset = dataloader.CubImageDataset(data_dir, 1, transform=train_transform)
+    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=valid_transform)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
 
     best_valid_acc = 0
@@ -58,9 +75,9 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
 
     for epoch in range(epochs):
         
-        if epoch == start_unfreeze_epoch:
-            model.unfreezeAll()
-            optimizer = optim.SGD(model.parameters(), lr=0.01)
+#         if epoch == start_unfreeze_epoch:
+#             model.unfreezeAll()
+#             optimizer = optim.SGD(model.parameters(), lr=0.01)
             
         model.train()
         print(f"Epoch {epoch+1}")
@@ -72,9 +89,7 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
             x = x.cuda()
             y = y.cuda()
 
-            pred = model(x)
-#             print(pred.dtype, pred.shape, y.dtype, y.shape)
-            
+            pred = model(x)          
             
             loss = criterion(pred, y)
             optimizer.zero_grad()
@@ -116,11 +131,11 @@ def train(data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
         if valid_acc > best_valid_acc:
             print(f"New best validation accuracy ({best_valid_acc} -> {valid_acc})")
             print("Saving model")
-            torch.save(model.state_dict(), save_dir +'best_alexnet_baseline.pt')
+            torch.save(model.state_dict(), save_dir + args.n + '.pt')
             print("Saved")
             best_valid_acc = valid_acc
-    plot(train_loss_list, train_acc_list, valid_loss_list, valid_acc_list, save_dir)
+    plot(train_loss_list, train_acc_list, valid_loss_list, valid_acc_list, save_dir + args.n)
     print("Finished Training")
     
 if __name__ == '__main__':
-    train()
+    train(args)

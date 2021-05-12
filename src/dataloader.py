@@ -25,7 +25,7 @@ class CubImageDataset(Dataset):
             sep=' ', 
             names=['img_id', 'train_val_test'])
         self.annotations = pd.read_csv(
-            os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_extracted.txt'), 
+            os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_adjusted.txt'), 
             sep=',',
             header=None)
         images = img_path.merge(img_labels, on='img_id').merge(train_val_test_split, on='img_id')
@@ -47,5 +47,5 @@ class CubImageDataset(Dataset):
             image = self.transform(image)
         label = sample[2] - 1 # make labels start from index 0
         if self.use_annotation:
-            label = self.annotations[idx].to_numpy()
+            label = self.annotations.iloc[idx].to_numpy()
         return image, label

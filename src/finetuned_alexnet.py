@@ -9,12 +9,17 @@ class FinetunedAlexNet(nn.Module):
     # super().__init__()
 
     self.model = alexnet(pretrained=True)
-    self.model.classifier[6] = nn.Linear(4096, 200)
+#     self.model.classifier[6] = nn.Linear(4096, 200)
+    classifier = list(self.model.classifier.children())[:-1]
+    classifier.append(nn.Linear(4096, 200))
+#     classifier[0] = nn.Dropout(0.8)
+#     classifier[3] = nn.Dropout(0.8)
+    self.model.classifier = nn.Sequential(*classifier)
     
-    for param in self.model.features.parameters():
-        param.requires_grad = False
-    for param in self.model.avgpool.parameters():
-        param.requires_grad = False
+#     for param in self.model.features.parameters():
+#         param.requires_grad = False
+#     for param in self.model.avgpool.parameters():
+#         param.requires_grad = False
 
   def forward(self, x: torch.tensor) -> torch.tensor:
     '''
