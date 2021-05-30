@@ -157,7 +157,7 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
     return train_prediction_output, validation_prediction_output
 
 def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
-    model = FullyConnectedModel(input_size=100, hidden_size=256, num_classes=200)
+    model = FullyConnectedModel(input_size=312, hidden_size=256, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001)
@@ -185,7 +185,7 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
         for i, data in tqdm(enumerate(train_loader)):
             x, y = data
             x = x.type(torch.FloatTensor)
-            x = x[:, :100]
+#             x = x[:, :100]
 #             print(x.shape)
             x = x.cuda()
             y = y.cuda()
@@ -205,7 +205,7 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
         for i, data in tqdm(enumerate(valid_loader)):
             x, y = data
             x = x.type(torch.FloatTensor)
-            x = x[:, :100]
+#             x = x[:, :100]
             x = x.cuda()
             y = y.cuda()
             pred = model(x)
@@ -214,6 +214,7 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
             pred = torch.max(pred, 1)[1]
             valid_acc += torch.sum(pred==y)
 #             print('*', end="", flush=True)
+        print(valid_acc, len(valid_dataset))
         train_loss = train_loss / len(train_dataset)
         valid_loss = valid_loss / len(valid_dataset)
         valid_acc = valid_acc / len(valid_dataset)
@@ -225,7 +226,7 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
         valid_loss_list.append(valid_loss)
 
         print()
-        print(f'Epch {epoch+1}, Training Loss: {train_loss}, Training Accuracy: {train_acc}, Validation Loss: {valid_loss}, Validation Accuracy: {valid_acc}')
+        print(f'Epoch {epoch+1}, Training Loss: {train_loss}, Training Accuracy: {train_acc}, Validation Loss: {valid_loss}, Validation Accuracy: {valid_acc}')
 
         if valid_acc > best_valid_acc:
             print(f"New best validation accuracy ({best_valid_acc} -> {valid_acc})")
