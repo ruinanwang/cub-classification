@@ -39,16 +39,16 @@ class FinetunedAlexNet(nn.Module):
             param.requires_grad = True
             
 class FinetunedAlexNet1(nn.Module):
-    def __init__(self):
+    def __init__(self, num_attributes):
         super(FinetunedAlexNet1, self).__init__()
 
         self.model = alexnet(pretrained=True)
         classifier = list(self.model.classifier.children())[:-1]
-        classifier.append(nn.Linear(4096, 312))
+        classifier.append(nn.Linear(4096, num_attributes))
         self.model.classifier = nn.Sequential(*classifier)
         self.fc_list = []
-        for i in range(312):
-            self.fc_list.append(nn.Linear(312, 3))
+        for i in range(num_attributes):
+            self.fc_list.append(nn.Linear(num_attributes, 1))
 
 #         for param in self.model.features.parameters():
 #             param.requires_grad = False
@@ -66,11 +66,9 @@ class FinetunedAlexNet1(nn.Module):
         '''
 
         output = self.model(x)
-#         print(output)
         output_list = []
         for fc in self.fc_list:
-            output_list.append(fc.cuda()(output))
-#         print(output_list)
+            output_list.append(nn.Sigmoid()(fc.cuda()(output)))
         return output_list
 
     def unfreezeAll(self):

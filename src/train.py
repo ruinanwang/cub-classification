@@ -15,18 +15,21 @@ from FullyConnectedModel import FullyConnectedModel
 from plot import plot
 
 import argparse
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PUB training args')
+parser.add_argument("-m", type=int, required=True)
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
+writer = SummaryWriter(log_dir="../runs/"+args.n)
 
 
-def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=10):
-    model = FinetunedAlexNet1()
+def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
+    model = FinetunedAlexNet1(num_attributes)
 #     model = FinetunedResNet1()
     model.cuda()
 #     print(model)
-    criterion = nn.CrossEntropyLoss() #nn.MultiLabelMarginLoss() #nn.BCEWithLogitsLoss() #nn.CrossEntropyLoss()
+    criterion = nn.BCELoss() #nn.CrossEntropyLoss() #nn.MultiLabelMarginLoss() #nn.BCEWithLogitsLoss() #nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     mean=[0.485, 0.456, 0.406]
@@ -91,20 +94,18 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
         for i, data in tqdm(enumerate(train_loader)):
             x, y = data
             x = x.cuda()
+            y = y.type(torch.FloatTensor)
             y = y.cuda()
-            
             pred = model(x)
-           
             loss = None
-            y += 1
-
             for ind, p in enumerate(pred):
+                target = y[:, ind].reshape(-1, 1)
                 if loss==None:
-                    loss = criterion(p, y[:, ind])
+                    loss = criterion(p, target)
                 else:
-                    loss += criterion(p, y[:, ind])
-                p = torch.max(p, 1)[1]
-                train_acc += torch.sum(p==y[:, ind])
+                    loss += criterion(p, target)
+                p = (p>0.5).type(torch.cuda.FloatTensor)
+                train_acc += torch.sum(p==target)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -117,18 +118,19 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
         for i, data in tqdm(enumerate(valid_loader)):
             x, y = data
             x = x.cuda()
+            y = y.type(torch.FloatTensor)
             y = y.cuda()
             pred = model(x)
             loss = None
-            y += 1
             for ind, p in enumerate(pred):
+                target = y[:, ind].reshape(-1, 1)
                 if loss==None:
-                    loss = criterion(p, y[:, ind])
+                    loss = criterion(p, target)
                 else:
-                    loss += criterion(p, y[:, ind])
+                    loss += criterion(p, target)
 
-                p = torch.max(p, 1)[1]
-                valid_acc += torch.sum(p==y[:, ind])
+                p = (p>0.5).type(torch.cuda.FloatTensor)
+                valid_acc += torch.sum(p==target)
 
             valid_loss += loss.item()
 
@@ -137,26 +139,32 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
         valid_acc = valid_acc / (len(valid_dataset)*312)
         train_acc = train_acc / (len(train_dataset)*312)
         
+        writer.add_scalar("Loss/train", train_loss, epoch)
+        writer.add_scalar("Loss/val", valid_loss, epoch)
+        writer.add_scalar("Accuracy/train", train_acc, epoch)
+        writer.add_scalar("Accuracy/val", valid_acc, epoch)
+        
         train_acc_list.append(train_acc)
         train_loss_list.append(train_loss)
         valid_acc_list.append(valid_acc)
         valid_loss_list.append(valid_loss)
 
         print()
-        print(f'Epoch {epoch+1}, Training Loss: {train_loss}, Training Accuracy: {train_acc}, Validation Loss: {valid_loss}, Validation Accuracy: {valid_acc}\n')
+        print(f'Epoch {epoch+1}, Training Loss: {train_loss}, Training Accuracy: {train_acc}, Validation Loss: {valid_loss}, Validation Accuracy: {valid_acc}')
 
         if valid_acc > best_valid_acc:
             print(f"New best validation accuracy ({best_valid_acc} -> {valid_acc})")
             print("Saving model...")
             torch.save(model.state_dict(), save_dir + args.n + '.pt')
-            print("Saved\n")
+            print("Saved")
             best_valid_acc = valid_acc
+        print(f"Current Best Valid Accuracy: {best_valid_acc}\n")
             
     plot(train_loss_list, train_acc_list, valid_loss_list, valid_acc_list, save_dir + args.n)
     
     return train_prediction_output, validation_prediction_output
 
-def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
+def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
     model = FullyConnectedModel(input_size=85, hidden_size=150, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
@@ -185,8 +193,6 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
         for i, data in tqdm(enumerate(train_loader)):
             x, y = data
             x = x.type(torch.FloatTensor)
-#             x = x[:, :100]
-#             print(x.shape)
             x = x.cuda()
             y = y.cuda()
             pred = model(x)
@@ -195,34 +201,32 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
             loss.backward()
             optimizer.step()
             pred = torch.max(pred, 1)[1]
-#             if epoch >= 5:
-#                 print("Epoch ", epoch, ": TRAINING WRONG CLASSIFICATION - should be: ", y, " but predicted: ", pred)
             train_acc += torch.sum(pred==y)
             train_loss += loss.item()
-#             print('.', end='', flush=True)
         print()
+        
         model.eval()
-
         print("Validating...")
         for i, data in tqdm(enumerate(valid_loader)):
             x, y = data
             x = x.type(torch.FloatTensor)
-#             x = x[:, :100]
             x = x.cuda()
             y = y.cuda()
             pred = model(x)
             loss = criterion(pred, y)
             valid_loss += loss.item()
             pred = torch.max(pred, 1)[1]
-#             if epoch >= 5:
-#                 print("Epoch ", epoch, ": VALIDATION WRONG CLASSIFICATION - should be: ", y, " but predicted: ", pred)
             valid_acc += torch.sum(pred==y)
-#             print('*', end="", flush=True)
         print(valid_acc, len(valid_dataset))
         train_loss = train_loss / len(train_dataset)
         valid_loss = valid_loss / len(valid_dataset)
-        valid_acc = valid_acc / len(valid_dataset)
         train_acc = train_acc / len(train_dataset)
+        valid_acc = valid_acc / len(valid_dataset)
+        
+        writer.add_scalar("Loss/train", train_loss, epoch)
+        writer.add_scalar("Loss/val", valid_loss, epoch)
+        writer.add_scalar("Accuracy/train", train_acc, epoch)
+        writer.add_scalar("Accuracy/val", valid_acc, epoch)
         
         train_acc_list.append(train_acc)
         train_loss_list.append(train_loss)
@@ -243,5 +247,9 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
 
             
 if __name__=='__main__':
-#     train_first_model(args)
-    train_second_model(args)
+    if args.m == 1:
+        train_first_model(args, writer)
+        writer.flush()
+    elif args.m == 2:
+        train_second_model(args, writer)
+        writer.flush()
