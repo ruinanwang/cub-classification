@@ -21,9 +21,9 @@ args = parser.parse_args()
 
 start_unfreeze_epoch = 7
 
-def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
-#     model = FinetunedAlexNet()
-    model = FinetunedResNet()
+def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=25):
+    model = FinetunedAlexNet()
+#     model = FinetunedResNet()
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
@@ -31,40 +31,42 @@ def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=1
     mean=[0.485, 0.456, 0.406]
     std=[0.229, 0.224, 0.225]
 
-    train_transform = transforms.Compose([
-        transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
-        transforms.Resize((386, 468)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
-    ])
-    
-    valid_transform = transforms.Compose([
-        transforms.Resize((386, 468)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
-    ])
-
-#     transformation_train = transforms.Compose([
-#         transforms.Resize((256,256)),
-#         transforms.RandomHorizontalFlip(),
-#         transforms.RandomRotation(10),
-#         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
+#     train_transform = transforms.Compose([
 #         transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
+#         transforms.RandomHorizontalFlip(),
+#         transforms.RandomRotation(15),
+#         transforms.Resize((386, 468)),
 #         transforms.ToTensor(),
-#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+#         transforms.Normalize(mean=mean, std=std),
 #     ])
     
-#     transformation_valid = transforms.Compose([
-#         transforms.Resize((256,256)),
+#     valid_transform = transforms.Compose([
+#         transforms.Resize((386, 468)),
 #         transforms.ToTensor(),
-#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+#         transforms.Normalize(mean=mean, std=std),
 #     ])
 
-    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=train_transform)
+    transformation_train = transforms.Compose([
+        transforms.Resize((256,256)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(10),
+        transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
+        transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
+        transforms.ToTensor(),
+#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize(mean=mean, std=std),
+    ])
+    
+    transformation_valid = transforms.Compose([
+        transforms.Resize((256,256)),
+        transforms.ToTensor(),
+#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize(mean=mean, std=std),
+    ])
+
+    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=transformation_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=valid_transform)
+    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=transformation_valid)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
 
     best_valid_acc = 0
