@@ -8,8 +8,8 @@ from sklearn.metrics import accuracy_score
 from torchvision import transforms
 from tqdm import tqdm
 
-from finetuned_alexnet import FinetunedAlexNet1
-from finetuned_alexnet import FinetunedResNet2
+from cb_models import FinetunedAlexNet1
+from cb_models import FinetunedResNet2
 from FullyConnectedModel import FullyConnectedModel
 
 from plot import plot
