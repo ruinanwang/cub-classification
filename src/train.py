@@ -157,10 +157,10 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
     return train_prediction_output, validation_prediction_output
 
 def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
-    model = FullyConnectedModel(input_size=312, hidden_size=256, num_classes=200)
+    model = FullyConnectedModel(input_size=85, hidden_size=150, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
 
 
     train_dataset = dataloader.CubImageDataset(data_dir, 0, True, part=1)
@@ -195,6 +195,8 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
             loss.backward()
             optimizer.step()
             pred = torch.max(pred, 1)[1]
+#             if epoch >= 5:
+#                 print("Epoch ", epoch, ": TRAINING WRONG CLASSIFICATION - should be: ", y, " but predicted: ", pred)
             train_acc += torch.sum(pred==y)
             train_loss += loss.item()
 #             print('.', end='', flush=True)
@@ -212,6 +214,8 @@ def train_second_model(args, data_dir="../data/", save_dir="../save/", batch_siz
             loss = criterion(pred, y)
             valid_loss += loss.item()
             pred = torch.max(pred, 1)[1]
+#             if epoch >= 5:
+#                 print("Epoch ", epoch, ": VALIDATION WRONG CLASSIFICATION - should be: ", y, " but predicted: ", pred)
             valid_acc += torch.sum(pred==y)
 #             print('*', end="", flush=True)
         print(valid_acc, len(valid_dataset))
