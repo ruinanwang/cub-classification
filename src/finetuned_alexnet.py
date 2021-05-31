@@ -92,20 +92,20 @@ class FinetunedResNet(nn.Module):
 class FinetunedResNet1(nn.Module):
   
     # constructor
-    def __init__(self):
+    def __init__(self, num_attributes):
         super().__init__()
         self.model = resnet18(pretrained=True)
         last_layer_inputs = self.model.fc.in_features
-        self.model.fc = nn.Linear(last_layer_inputs, 312)
+        self.model.fc = nn.Linear(last_layer_inputs, num_attributes)
         self.fc_list = []
-        for i in range(312):
-            self.fc_list.append(nn.Linear(312, 3))
+        for i in range(num_attributes):
+            self.fc_list.append(nn.Linear(num_attributes, 1))
 #         self.model.to(device)
 
     def forward(self, x):
         output = self.model.forward(x)
         output_list = []
         for fc in self.fc_list:
-            output_list.append(fc.cuda()(output))
+            output_list.append(nn.Sigmoid()(fc.cuda()(output)))
 #         print(output_list)
         return output_list

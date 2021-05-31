@@ -23,8 +23,8 @@ args = parser.parse_args()
 
 
 def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
-    model = FinetunedAlexNet1(num_attributes)
-#     model = FinetunedResNet1()
+#     model = FinetunedAlexNet1(num_attributes)
+    model = FinetunedResNet1(num_attributes)
     model.cuda()
 #     print(model)
     criterion = nn.BCELoss() #nn.CrossEntropyLoss() #nn.MultiLabelMarginLoss() #nn.BCEWithLogitsLoss() #nn.CrossEntropyLoss()
@@ -134,8 +134,8 @@ def train_first_model(args, data_dir="../data/", save_dir="../save/", batch_size
 
         train_loss = train_loss / len(train_dataset)
         valid_loss = valid_loss / len(valid_dataset)
-        valid_acc = valid_acc / (len(valid_dataset)*312)
-        train_acc = train_acc / (len(train_dataset)*312)
+        valid_acc = valid_acc / (len(valid_dataset)*num_attributes)
+        train_acc = train_acc / (len(train_dataset)*num_attributes)
         
         train_acc_list.append(train_acc)
         train_loss_list.append(train_loss)
