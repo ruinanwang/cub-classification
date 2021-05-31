@@ -165,8 +165,8 @@ def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", ba
     
     return train_prediction_output, validation_prediction_output
 
-def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
-    model = FullyConnectedModel(input_size=85, hidden_size=150, num_classes=200)
+def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500, num_attributes=89):
+    model = FullyConnectedModel(input_size=num_attributes, hidden_size=150, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)

@@ -25,16 +25,20 @@ class CubImageDataset(Dataset):
             os.path.join(self.root_dir, 'CUB_200_2011', 'train_val_test_split.txt'), 
             sep=' ', 
             names=['img_id', 'train_val_test'])
-        if self.train_val_test_mode == 0:
-            self.annotations = pd.read_csv(
-                os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_majority_votes_with_selection.txt'), 
-                sep=',',
-                header=None)
-        else:
-            self.annotations = pd.read_csv(
-                os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_for_val_test.txt'), 
-                sep=',',
-                header=None)
+        self.annotations = pd.read_csv(
+            os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'original_attributes_with_selection.txt'), 
+            sep=',',
+            header=None)
+#         if self.train_val_test_mode == 0:
+#             self.annotations = pd.read_csv(
+#                 os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_majority_votes_with_selection.txt'), 
+#                 sep=',',
+#                 header=None)
+#         else:
+#             self.annotations = pd.read_csv(
+#                 os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_for_val_test.txt'), 
+#                 sep=',',
+#                 header=None)
         images = img_path.merge(img_labels, on='img_id').merge(train_val_test_split, on='img_id')
         if self.train_val_test_mode == 0:
             self.data = images[images.train_val_test == 0]
