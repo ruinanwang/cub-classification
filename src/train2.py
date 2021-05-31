@@ -9,7 +9,7 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from finetuned_alexnet import FinetunedAlexNet1
-from finetuned_alexnet import FinetunedResNet1
+from finetuned_alexnet import FinetunedResNet2
 from FullyConnectedModel import FullyConnectedModel
 
 from plot import plot
@@ -25,15 +25,15 @@ writer = SummaryWriter(log_dir="../runs/"+args.n)
 
 
 def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
-#     model = FinetunedAlexNet1(num_attributes)
-    model = FinetunedResNet1(num_attributes)
+    model = FinetunedResNet2(num_attributes)
     model.cuda()
 #     print(model)
-    criterion = nn.BCELoss() #nn.CrossEntropyLoss() #nn.MultiLabelMarginLoss() #nn.BCEWithLogitsLoss() #nn.CrossEntropyLoss()
+    criterion = nn.BCELoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     mean=[0.485, 0.456, 0.406]
     std=[0.229, 0.224, 0.225]
+    
 #     train_transform = transforms.Compose([
 #         transforms.ToTensor(),
 #         transforms.Normalize(mean=mean, std=std),
@@ -97,23 +97,18 @@ def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", ba
             y = y.type(torch.FloatTensor)
             y = y.cuda()
             pred = model(x)
-            loss = None
-            print("new pred: ", pred)
-            for ind, p in enumerate(pred):
-                target = y[:, ind].reshape(-1, 1)
-                if loss==None:
-                    loss = criterion(p, target)
-                else:
-                    loss += criterion(p, target)
-                p = (p>0.5).type(torch.cuda.FloatTensor)
-                train_acc += torch.sum(p==target)
+            
+            loss = criterion(pred, y)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
+            
+            pred_int = (pred>0.5).type(torch.cuda.FloatTensor)
+            train_acc += torch.sum(pred_int==y)
             train_loss += loss.item()
-        model.eval()
+            
 
+        model.eval()
         valid_acc = 0
         print("Validating...")
         for i, data in tqdm(enumerate(valid_loader)):
@@ -122,17 +117,10 @@ def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", ba
             y = y.type(torch.FloatTensor)
             y = y.cuda()
             pred = model(x)
-            loss = None
-            for ind, p in enumerate(pred):
-                target = y[:, ind].reshape(-1, 1)
-                if loss==None:
-                    loss = criterion(p, target)
-                else:
-                    loss += criterion(p, target)
-
-                p = (p>0.5).type(torch.cuda.FloatTensor)
-                valid_acc += torch.sum(p==target)
-
+            loss = criterion(pred, y)
+            valid_loss += loss.item()
+            pred_int = (pred>0.5).type(torch.cuda.FloatTensor)
+            valid_acc += torch.sum(pred_int==y)
             valid_loss += loss.item()
 
         train_loss = train_loss / len(train_dataset)

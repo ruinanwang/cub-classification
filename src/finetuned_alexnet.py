@@ -109,3 +109,17 @@ class FinetunedResNet1(nn.Module):
             output_list.append(nn.Sigmoid()(fc.cuda()(output)))
 #         print(output_list)
         return output_list
+
+class FinetunedResNet2(nn.Module):
+  
+    # constructor
+    def __init__(self, num_attributes):
+        super().__init__()
+        self.model = resnet18(pretrained=True)
+        last_layer_inputs = self.model.fc.in_features
+        self.model.fc = nn.Linear(last_layer_inputs, num_attributes)  
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        x = nn.Sigmoid()(x)
+        return x
