@@ -3,3 +3,4 @@ __pycache__/
 data.zip
 data/CUB_200_2011/images
 save/
+runs/
