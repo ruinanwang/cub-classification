@@ -21,6 +21,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-n", type=str, required=True)
+parser.add_argument("-model_name", type=str, required=True)
 args = parser.parse_args()
 train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
@@ -29,8 +30,23 @@ val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 start_unfreeze_epoch = 7
 
 def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/", batch_size=64, epochs=20):
-#     model = FinetunedDenseNet()
-    model = FinetunedInceptionV3()
+    if args.model_name.lower() in ['alexnet', 'alex']:
+        model = FinetunedAlexNet()
+        size = (256, 256)
+    elif args.model_name.lower() in ['resnet', 'res']:
+        model = FinetunedResNet()
+        size = (256, 256)
+    elif args.model_name.lower() in ['inception']:
+        model = FinetunedInceptionV3()
+        size = (299, 299)
+        if batch_size == 64: batch_size = 32
+    elif args.model_name.lower() in ['vgg']:
+        model = FinetunedVggNet()
+        size = (256, 256)
+    elif args.model_name.lower() in ['densenet', 'dense']:
+        model = FinetunedDenseNet()
+        size = (256, 256)
+
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
@@ -39,7 +55,7 @@ def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/
     std=[0.229, 0.224, 0.225]
 
     transformation_train = transforms.Compose([
-        transforms.Resize((299,299)),
+        transforms.Resize(size),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(10),
         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
@@ -49,7 +65,7 @@ def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/
     ])
     
     transformation_valid = transforms.Compose([
-        transforms.Resize((299,299)),
+        transforms.Resize(size),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)
     ])

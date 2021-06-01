@@ -20,17 +20,25 @@ from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-m", type=int, required=True)
+parser.add_argument("-model_name", type=str, required=False)
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
 train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=32, epochs=15, num_attributes=89):
-#     model = FinetunedResNet2(num_attributes)
-    model = FinetunedInceptionV3_2(num_attributes)
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=89):
+    if args.model_name.lower() in ['alexnet', 'alex']:
+        model = FinetunedAlexNet2(num_attributes) #haven't created yet
+        size = (256, 256)
+    elif args.model_name.lower() in ['resnet', 'res']:
+        model = FinetunedResNet2(num_attributes)
+        size = (256, 256)
+    elif args.model_name.lower() in ['inception']:
+        model = FinetunedInceptionV3_2(num_attributes)
+        size = (299, 299)
+        if batch_size == 64: batch_size = 32
     model.cuda()
-#     print(model)
     criterion = nn.BCELoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
@@ -58,7 +66,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
 #     ])
 
     train_transform = transforms.Compose([
-        transforms.Resize((299,299)),
+        transforms.Resize(size),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(10),
         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
@@ -68,7 +76,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
     ])
 
     valid_transform = transforms.Compose([
-        transforms.Resize((299,299)),
+        transforms.Resize(size),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -156,8 +164,8 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
     
     return train_prediction_output, validation_prediction_output
 
-def train_second_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
-    model = FullyConnectedModel(input_size=85, hidden_size=150, num_classes=200)
+def train_second_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500, num_attributes=89):
+    model = FullyConnectedModel(input_size=num_attributes, hidden_size=150, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)

@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from cb_models import FinetunedAlexNet1
 from cb_models import FinetunedResNet1
+from cb_models import FinetunedInceptionV3_1
 from FullyConnectedModel import FullyConnectedModel
 
 from plot import plot
@@ -19,6 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-m", type=int, required=True)
+parser.add_argument("-model_name", type=str, required=False)
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
 train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
@@ -26,10 +28,17 @@ val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
 def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
-#     model = FinetunedAlexNet1(num_attributes)
-    model = FinetunedResNet1(num_attributes)
+    if args.model_name.lower() in ['alexnet', 'alex']:
+        model = FinetunedAlexNet1(num_attributes)
+        size = (256, 256)
+    elif args.model_name.lower() in ['resnet', 'res']:
+        model = FinetunedResNet1(num_attributes)
+        size = (256, 256)
+    elif args.model_name.lower() in ['inception']:
+        model = FinetunedInceptionV3_1(num_attributes)
+        size = (299, 299)
+        if batch_size == 64: batch_size = 32
     model.cuda()
-#     print(model)
     criterion = nn.BCELoss() #nn.CrossEntropyLoss() #nn.MultiLabelMarginLoss() #nn.BCEWithLogitsLoss() #nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
@@ -56,7 +65,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
 #     ])
 
     train_transform = transforms.Compose([
-        transforms.Resize((256,256)),
+        transforms.Resize(size),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(10),
         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
@@ -66,7 +75,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
     ])
 
     valid_transform = transforms.Compose([
-        transforms.Resize((256,256)),
+        transforms.Resize(size),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
