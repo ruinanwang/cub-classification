@@ -250,8 +250,8 @@ if __name__=='__main__':
     if args.m == 1:
         train_first_model(args, train_writer, val_writer)
         train_writer.flush()
-        val_write.flush()
+        val_writer.flush()
     elif args.m == 2:
         train_second_model(args, train_writer, val_writer)
         train_writer.flush()
-        val_write.flush()
+        val_writer.flush()
