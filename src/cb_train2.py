@@ -21,10 +21,11 @@ parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-m", type=int, required=True)
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
-writer = SummaryWriter(log_dir="../runs/"+args.n)
+train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
+val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
     model = FinetunedResNet2(num_attributes)
     model.cuda()
 #     print(model)
@@ -128,10 +129,10 @@ def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", ba
         valid_acc = valid_acc / (len(valid_dataset)*num_attributes)
         train_acc = train_acc / (len(train_dataset)*num_attributes)
         
-        writer.add_scalar("Loss/train", train_loss, epoch)
-        writer.add_scalar("Loss/val", valid_loss, epoch)
-        writer.add_scalar("Accuracy/train", train_acc, epoch)
-        writer.add_scalar("Accuracy/val", valid_acc, epoch)
+        train_writer.add_scalar("Loss", train_loss, epoch)
+        val_writer.add_scalar("Loss", valid_loss, epoch)
+        train_writer.add_scalar("Accuracy", train_acc, epoch)
+        val_writer.add_scalar("Accuracy", valid_acc, epoch)
         
         train_acc_list.append(train_acc)
         train_loss_list.append(train_loss)
@@ -153,7 +154,7 @@ def train_first_model(args, writer, data_dir="../data/", save_dir="../save/", ba
     
     return train_prediction_output, validation_prediction_output
 
-def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
+def train_second_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500):
     model = FullyConnectedModel(input_size=85, hidden_size=150, num_classes=200)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
@@ -212,10 +213,10 @@ def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", b
         train_acc = train_acc / len(train_dataset)
         valid_acc = valid_acc / len(valid_dataset)
         
-        writer.add_scalar("Loss/train", train_loss, epoch)
-        writer.add_scalar("Loss/val", valid_loss, epoch)
-        writer.add_scalar("Accuracy/train", train_acc, epoch)
-        writer.add_scalar("Accuracy/val", valid_acc, epoch)
+        train_writer.add_scalar("Loss", train_loss, epoch)
+        val_writer.add_scalar("Loss", valid_loss, epoch)
+        train_writer.add_scalar("Accuracy", train_acc, epoch)
+        val_writer.add_scalar("Accuracy", valid_acc, epoch)
         
         train_acc_list.append(train_acc)
         train_loss_list.append(train_loss)
@@ -237,8 +238,8 @@ def train_second_model(args, writer, data_dir="../data/", save_dir="../save/", b
             
 if __name__=='__main__':
     if args.m == 1:
-        train_first_model(args, writer)
+        train_first_model(args, train_writer, val_writer)
         writer.flush()
     elif args.m == 2:
-        train_second_model(args, writer)
+        train_second_model(args, train_writer, val_writer)
         writer.flush()

@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torchvision.models import alexnet
 from torchvision.models import resnet18
+from torchvision.models import vgg16
+from torchvision.models import densenet161
 
 class FinetunedAlexNet(nn.Module):
   def __init__(self):
@@ -22,15 +24,6 @@ class FinetunedAlexNet(nn.Module):
 #         param.requires_grad = False
 
   def forward(self, x: torch.tensor) -> torch.tensor:
-    '''
-    Perform the forward pass with the net
-
-    Args:
-    -   x: the input image [Dim: (N,C,H,W)]
-    Returns:
-    -   output: the output (raw scores) of the net [Dim: (N,200)]
-    '''
-
     output = self.model(x)
     return output
 
@@ -39,14 +32,40 @@ class FinetunedAlexNet(nn.Module):
         param.requires_grad = True
         
 class FinetunedResNet(nn.Module):
-  
-    # constructor
     def __init__(self):
         super().__init__()
         self.model = resnet18(pretrained=True)
         last_layer_inputs = self.model.fc.in_features
         self.model.fc = nn.Linear(last_layer_inputs, 200)  
-#         self.model.to(device)
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
+
+class FinetunedVggNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = vgg16(pretrained=True)
+        classifier = list(self.model.classifier.children())[:-1]
+        classifier.append(nn.Linear(4096, 200))
+        self.model.classifier = nn.Sequential(*classifier)
+        for param in self.model.features.parameters():
+            param.requires_grad = False
+        for param in self.model.avgpool.parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
+
+class FinetunedDenseNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = densenet161(pretrained=True)
+        classifier = nn.Linear(2208, 200
+        self.model.classifier = nn.Sequential(*classifier)
+        for param in self.model.features.parameters():
+            param.requires_grad = False
 
     def forward(self, x):
         x = self.model.forward(x)

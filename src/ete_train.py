@@ -9,69 +9,54 @@ from torchvision import transforms
 
 from ete_models import FinetunedAlexNet
 from ete_models import FinetunedResNet
+from ete_models import FinetunedVggNet
+from ete_models import FinetunedDenseNet
 
 from plot import *
 
 import argparse
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
+train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
+val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
 start_unfreeze_epoch = 7
 
-def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=10):
-#     model = FinetunedAlexNet()
-    model = FinetunedResNet()
+def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/", batch_size=64, epochs=20):
+    model = FinetunedDenseNet()
     model.cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
 
     mean=[0.485, 0.456, 0.406]
     std=[0.229, 0.224, 0.225]
 
-    train_transform = transforms.Compose([
-        transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
+    transformation_train = transforms.Compose([
+        transforms.Resize((256,256)),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
-        transforms.Resize((386, 468)),
+        transforms.RandomRotation(10),
+        transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
+        transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
         transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
+        transforms.Normalize(mean=mean, std=std)
     ])
     
-    valid_transform = transforms.Compose([
-        transforms.Resize((386, 468)),
+    transformation_valid = transforms.Compose([
+        transforms.Resize((256,256)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
+        transforms.Normalize(mean=mean, std=std)
     ])
 
-#     transformation_train = transforms.Compose([
-#         transforms.Resize((256,256)),
-#         transforms.RandomHorizontalFlip(),
-#         transforms.RandomRotation(10),
-#         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
-#         transforms.ColorJitter(brightness=1, contrast=1, saturation=1),
-#         transforms.ToTensor(),
-#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-#     ])
-    
-#     transformation_valid = transforms.Compose([
-#         transforms.Resize((256,256)),
-#         transforms.ToTensor(),
-#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-#     ])
-
-    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=train_transform)
+    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=transformation_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=valid_transform)
+    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=transformation_valid)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
 
     best_valid_acc = 0
-    train_acc_list = []
-    train_loss_list = []
-    valid_acc_list = []
-    valid_loss_list = []
 
     for epoch in range(epochs):
         
@@ -119,11 +104,10 @@ def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=1
         valid_acc = valid_acc / len(valid_dataset)
         train_acc = train_acc / len(train_dataset)
         
-        train_acc_list.append(train_acc)
-        train_loss_list.append(train_loss)
-        valid_acc_list.append(valid_acc)
-        valid_loss_list.append(valid_loss)
-        
+        train_writer.add_scalar("Loss", train_loss, epoch)
+        val_writer.add_scalar("Loss", valid_loss, epoch)
+        train_writer.add_scalar("Accuracy", train_acc, epoch)
+        val_writer.add_scalar("Accuracy", valid_acc, epoch)
 
         print()
         print(f'Epch {epoch+1}, Training Loss: {train_loss}, Training Accuracy: {train_acc}, Validation Loss: {valid_loss}, Validation Accuracy: {valid_acc}')
@@ -134,8 +118,7 @@ def train(args, data_dir="../data", save_dir="../save/", batch_size=64, epochs=1
             torch.save(model.state_dict(), save_dir + args.n + '.pt')
             print("Saved")
             best_valid_acc = valid_acc
-    plot(train_loss_list, train_acc_list, valid_loss_list, valid_acc_list, save_dir + args.n)
     print("Finished Training")
     
 if __name__ == '__main__':
-    train(args)
+    train(args, train_writer, val_writer)
