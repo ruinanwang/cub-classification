@@ -26,11 +26,11 @@ val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 start_unfreeze_epoch = 7
 
-def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/", batch_size=64, epochs=20):
-    model = FinetunedDenseNet()
+def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/", batch_size=64, epochs=25):
+    model = FinetunedAlexNet()
     model.cuda()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.SGD(model.parameters(), lr=0.05)
 
     mean=[0.485, 0.456, 0.406]
     std=[0.229, 0.224, 0.225]
@@ -122,3 +122,5 @@ def train(args, train_writer, val_writer, data_dir="../data", save_dir="../save/
     
 if __name__ == '__main__':
     train(args, train_writer, val_writer)
+    train_writer.flush()
+    val_writer.flush()
