@@ -63,8 +63,7 @@ class FinetunedDenseNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = densenet161(pretrained=True)
-        classifier = nn.Linear(2208, 200)
-        self.model.classifier = nn.Sequential(*classifier)
+        self.model.classifier = nn.Linear(2208, 200)
         for param in self.model.features.parameters():
             param.requires_grad = False
 
