@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from cb_models import FinetunedAlexNet1
 from cb_models import FinetunedResNet2
+from cb_models import FinetunedInceptionV3_2
 from FullyConnectedModel import FullyConnectedModel
 
 from plot import plot
@@ -25,8 +26,9 @@ train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=85):
-    model = FinetunedResNet2(num_attributes)
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=32, epochs=15, num_attributes=85):
+#     model = FinetunedResNet2(num_attributes)
+    model = FinetunedInceptionV3_2(num_attributes)
     model.cuda()
 #     print(model)
     criterion = nn.BCELoss()
@@ -56,7 +58,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
 #     ])
 
     train_transform = transforms.Compose([
-        transforms.Resize((256,256)),
+        transforms.Resize((299,299)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(10),
         transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
@@ -66,7 +68,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
     ])
 
     valid_transform = transforms.Compose([
-        transforms.Resize((256,256)),
+        transforms.Resize((299,299)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
