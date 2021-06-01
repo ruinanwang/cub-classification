@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torchvision.models import alexnet
 from torchvision.models import resnet18
+from torchvision.models import vgg16
+from torchvision.models import densenet161
 from torchvision.models import inception_v3
 
 class FinetunedAlexNet(nn.Module):
@@ -208,3 +210,32 @@ class FinetunedInceptionV3_2(nn.Module):
         else:
             output = nn.Sigmoid()(output)
         return output
+    
+class FinetunedVggNet(nn.Module):
+    def __init__(self, num_attributes):
+        super().__init__()
+        self.model = vgg16(pretrained=True)
+        classifier = list(self.model.classifier.children())[:-1]
+        classifier.append(nn.Linear(4096, num_attributes))
+        self.model.classifier = nn.Sequential(*classifier)
+        for param in self.model.features.parameters():
+            param.requires_grad = False
+        for param in self.model.avgpool.parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x
+
+class FinetunedDenseNet(nn.Module):
+    def __init__(self, num_attributes):
+        super().__init__()
+        self.model = densenet161(pretrained=True)
+        classifier = nn.Linear(2208, num_attributes)
+        self.model.classifier = nn.Sequential(*classifier)
+        for param in self.model.features.parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        x = self.model.forward(x)
+        return x

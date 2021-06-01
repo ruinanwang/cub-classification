@@ -11,6 +11,8 @@ from tqdm import tqdm
 from cb_models import FinetunedAlexNet1
 from cb_models import FinetunedResNet2
 from cb_models import FinetunedInceptionV3_2
+from cb_models import FinetunedVggNet
+from cb_models import FinetunedDenseNet
 from FullyConnectedModel import FullyConnectedModel
 
 from plot import plot
@@ -38,6 +40,13 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
         model = FinetunedInceptionV3_2(num_attributes)
         size = (299, 299)
         if batch_size == 64: batch_size = 32
+    elif args.model_name.lower() in ['vgg', 'vggnet]:
+        model = FinetunedVggNet(num_attributes)
+        size = (256, 256)
+        if batch_size == 64: batch_size = 32
+    elif args.model_name.lower() in ['dense', 'densenet']:
+        model = FinetunedDenseNet(num_attributes)
+        size = (256, 256)
     model.cuda()
     criterion = nn.BCELoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
