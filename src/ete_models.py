@@ -4,6 +4,7 @@ from torchvision.models import alexnet
 from torchvision.models import resnet18
 from torchvision.models import vgg16
 from torchvision.models import densenet161
+from torchvision.models import inception_v3
 
 class FinetunedAlexNet(nn.Module):
   def __init__(self):
@@ -62,7 +63,7 @@ class FinetunedDenseNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = densenet161(pretrained=True)
-        classifier = nn.Linear(2208, 200
+        classifier = nn.Linear(2208, 200)
         self.model.classifier = nn.Sequential(*classifier)
         for param in self.model.features.parameters():
             param.requires_grad = False
@@ -70,3 +71,34 @@ class FinetunedDenseNet(nn.Module):
     def forward(self, x):
         x = self.model.forward(x)
         return x
+                               
+class FinetunedInceptionV3(nn.Module):
+    def __init__(self):
+        super(FinetunedInceptionV3, self).__init__()
+        self.model = inception_v3(pretrained=True)
+        self.model.fc = nn.Linear(2048, 200)
+
+
+#         for param in self.model.features.parameters():
+#             param.requires_grad = False
+#         for param in self.model.avgpool.parameters():
+#             param.requires_grad = False
+
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        '''
+        Perform the forward pass with the net
+
+        Args:
+        -   x: the input image [Dim: (N,C,H,W)]
+        Returns:
+        -   output: the output (raw scores) of the net [Dim: (N,200)]
+        '''
+
+        output = self.model(x)
+        if self.training:
+            return output.logits
+        return output
+
+    def unfreezeAll(self):
+        for param in self.model.parameters():
+            param.requires_grad = True

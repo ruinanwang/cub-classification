@@ -26,7 +26,7 @@ train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=32, epochs=15, num_attributes=85):
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=32, epochs=15, num_attributes=89):
 #     model = FinetunedResNet2(num_attributes)
     model = FinetunedInceptionV3_2(num_attributes)
     model.cuda()
