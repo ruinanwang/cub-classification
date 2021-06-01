@@ -40,7 +40,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
         model = FinetunedInceptionV3_2(num_attributes)
         size = (299, 299)
         if batch_size == 64: batch_size = 32
-    elif args.model_name.lower() in ['vgg', 'vggnet]:
+    elif args.model_name.lower() in ['vgg', 'vggnet']:
         model = FinetunedVggNet(num_attributes)
         size = (256, 256)
         if batch_size == 64: batch_size = 32
