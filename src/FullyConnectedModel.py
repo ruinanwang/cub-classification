@@ -14,9 +14,9 @@ class FullyConnectedModel(nn.Module):
                 nn.Linear(hidden_size, num_classes)
             )
         elif num_layers == 3:
+            if type(hidden_size) == int:
+                hidden_size = [hidden_size, hidden_size]
             self.model = nn.Sequential(
-                if type(hidden_size) == int:
-                    hidden_size = [hidden_size, hidden_size]
                 nn.Linear(input_size, hidden_size[0]),
                 nn.ReLU(),
                 nn.Linear(hidden_size[0], hidden_size[1]),
