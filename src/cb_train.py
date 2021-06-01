@@ -176,7 +176,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
     return train_prediction_output, validation_prediction_output
 
 def train_second_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=500, num_attributes=89):
-    model = FullyConnectedModel(input_size=num_attributes, hidden_size=150, num_classes=200)
+    model = FullyConnectedModel(input_size=num_attributes, hidden_size=150, num_classes=200, num_layers=1)
     model.cuda()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
@@ -260,7 +260,9 @@ def train_second_model(args, train_writer, val_writer, data_dir="../data/", save
 if __name__=='__main__':
     if args.m == 1:
         train_first_model(args, train_writer, val_writer)
-        writer.flush()
+        train_writer.flush()
+        val_write.flush()
     elif args.m == 2:
         train_second_model(args, train_writer, val_writer)
-        writer.flush()
+        train_writer.flush()
+        val_write.flush()
