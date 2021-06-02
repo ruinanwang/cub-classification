@@ -29,7 +29,7 @@ train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=15, num_attributes=89):
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=25, num_attributes=89):
     if args.model_name.lower() in ['alexnet', 'alex']:
         model = FinetunedAlexNet2(num_attributes) #haven't created yet
         size = (256, 256)

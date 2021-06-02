@@ -224,7 +224,7 @@ class FinetunedVggNet(nn.Module):
             param.requires_grad = False
 
     def forward(self, x):
-        x = self.model.forward(x)
+        x = nn.Sigmoid()(self.model.forward(x))
         return x
 
 class FinetunedDenseNet(nn.Module):
@@ -236,5 +236,5 @@ class FinetunedDenseNet(nn.Module):
             param.requires_grad = False
 
     def forward(self, x):
-        x = self.model.forward(x)
+        x = nn.Sigmoid()(self.model.forward(x))
         return x
