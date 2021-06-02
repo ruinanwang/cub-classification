@@ -84,5 +84,13 @@ class CubImageDataset(Dataset):
                 annotation = self.annotations.iloc[image_id-1].to_numpy()
                 label = sample[2] - 1
                 return annotation, label
-        
-        
+            if self.part == 2:
+                sample = self.data.iloc[idx]
+                path = os.path.join(self.root_dir, 'CUB_200_2011', 'images', sample[1])
+                image = default_loader(path)
+                if self.transform:
+                    image = self.transform(image)
+                image_id = sample[0] #image_id starts from 1
+                annotation = self.annotations.iloc[image_id-1].to_numpy()
+                label = sample[2] - 1
+                return image, annotation, label
