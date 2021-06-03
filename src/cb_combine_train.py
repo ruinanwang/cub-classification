@@ -58,7 +58,8 @@ def train(args, train_writer, val_writer, data_dir="../data/", save_dir="../save
     
     print('Successfully loaded in models')
 
-    criterion = nn.CrossEntropyLoss()
+    criterion1 = nn.BCELoss()
+    criterion2 = nn.CrossEntropyLoss()
     params = list(model1.parameters()) + list(model2.parameters())
     optimizer = optim.SGD(params, lr=0.01)
 
@@ -78,9 +79,9 @@ def train(args, train_writer, val_writer, data_dir="../data/", save_dir="../save
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    train_dataset = dataloader.CubImageDataset(data_dir, 0, False, transform=train_transform)
+    train_dataset = dataloader.CubImageDataset(data_dir, 0, True, transform=train_transform, part=2)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_dataset = dataloader.CubImageDataset(data_dir, 1, False, transform=valid_transform)
+    valid_dataset = dataloader.CubImageDataset(data_dir, 1, True, transform=valid_transform, part=2)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
 
     best_valid_acc = 0
@@ -98,13 +99,17 @@ def train(args, train_writer, val_writer, data_dir="../data/", save_dir="../save
         valid_loss = 0
         valid_acc = 0
         print("Training...")
-        for x, y in tqdm(train_loader):
+        for x, annotations, y in tqdm(train_loader):
+            annotations = annotations.type(torch.FloatTensor)
             x = x.cuda()
+            annotations = annotations.cuda()
             y = y.cuda()
             out1 = model1(x)
+            loss1 = criterion1(out1, annotations)
             pred = model2(out1)
-            loss = criterion(pred, y)
+            loss2 = criterion2(pred, y)
             optimizer.zero_grad()
+            loss = loss1 + loss2
             loss.backward()
             optimizer.step()
             pred = torch.max(pred, 1)[1]
@@ -114,12 +119,16 @@ def train(args, train_writer, val_writer, data_dir="../data/", save_dir="../save
         model1.eval()
         model2.eval()
         print("Validating...")
-        for x, y in tqdm(valid_loader):
+        for x, annotations, y in tqdm(valid_loader):
+            annotations = annotations.type(torch.FloatTensor)
             x = x.cuda()
+            annotations = annotations.cuda()
             y = y.cuda()
             out1 = model1(x)
+            loss1 = criterion1(out1, annotations)
             pred = model2(out1)
-            loss = criterion(pred, y)
+            loss2 = criterion2(pred, y)
+            loss = loss1 + loss2
             valid_loss += loss.item()
             pred = torch.max(pred, 1)[1]
             valid_acc += torch.sum(pred==y)
