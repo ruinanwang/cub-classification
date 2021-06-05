@@ -55,18 +55,38 @@ def test(args, data_dir="../data", save_dir="../save/", batch_size=64, num_attri
 
     test_acc = 0.0
     prediction = np.array([])
+    ##
+    correct_prediction_class_to_count = np.zeros(200)
+    false_prediction_class_to_count = np.zeros(200)
+    wrong_prediction = []
+    ##
     
     print("Testing...")
     
-    for x, y in tqdm(test_loader):
+    for x, y, id in tqdm(test_loader):
         x = x.cuda()
         y = y.cuda()
         pred = model2(model1(x))
         pred = torch.max(pred, 1)[1]
         test_acc += torch.sum(pred==y)
+        ##
+        pred = pred.detach().cpu().numpy()
+        y = y.detach().cpu().numpy()
+        ground_truth_class_true = y[pred==y].astype(np.int32)
+        ground_truth_class_false = y[pred!=y].astype(np.int32)
+        np.add.at(correct_prediction_class_to_count, ground_truth_class_true, 1)
+        np.add.at(false_prediction_class_to_count, ground_truth_class_false, 1)
+        num = pred.shape[0]
+        for i in range(num):
+            if pred[i] != y[i] and y[i] in [65, 61, 24]:
+                wrong_prediction.append({'id': id[i], 'truth': y[i], 'prediction': pred[i]})
+        ##
     test_acc /= len(test_dataset)
     
     print(f"TEST Accuracy: {test_acc}")
+    print("correct:", correct_prediction_class_to_count)
+    print("false:", false_prediction_class_to_count)
+    print(wrong_prediction)
     return prediction
 
 if __name__ == '__main__':

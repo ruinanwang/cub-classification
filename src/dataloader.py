@@ -59,7 +59,10 @@ class CubImageDataset(Dataset):
                 image = self.transform(image)
             label = sample[2] - 1 # make labels start from index 0
 #             print(image, label)
-            return image, label
+            if self.train_val_test_mode == 2:
+                return image, label, sample[0]
+            else:
+                return image, label
         if self.use_annotation == True:
 #             if self.part == 0:
 #                 sample = self.data.iloc[idx]

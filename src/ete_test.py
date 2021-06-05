@@ -7,8 +7,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 from torchvision import transforms
 
-from finetuned_alexnet import FinetunedAlexNet
-from finetuned_alexnet import FinetunedResNet
+from ete_models import *
 
 import argparse
 
@@ -16,8 +15,8 @@ parser = argparse.ArgumentParser(description='PUB training args')
 parser.add_argument("-n", type=str, required=True)
 args = parser.parse_args()
 
-def test(args, data_dir="../data", save_dir="../save/", batch_size=64):
-    model = FinetunedAlexNet()
+def test(args, data_dir="../data", save_dir="../save/", batch_size=32):
+    model = FinetunedInceptionV3()
 #     model = FinetunedResNet()
     model.load_state_dict(torch.load(save_dir + args.n + '.pt'))
     model.cuda()
