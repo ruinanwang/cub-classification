@@ -25,20 +25,20 @@ class CubImageDataset(Dataset):
             os.path.join(self.root_dir, 'CUB_200_2011', 'train_val_test_split.txt'), 
             sep=' ', 
             names=['img_id', 'train_val_test'])
-        self.annotations = pd.read_csv(
-            os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'original_attributes_with_selection.txt'), 
-            sep=',',
-            header=None)
-#         if self.train_val_test_mode == 0:
-#             self.annotations = pd.read_csv(
-#                 os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_majority_votes_with_selection.txt'), 
-#                 sep=',',
-#                 header=None)
-#         else:
-#             self.annotations = pd.read_csv(
-#                 os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_for_val_test.txt'), 
-#                 sep=',',
-#                 header=None)
+#         self.annotations = pd.read_csv(
+#             os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'original_attributes_with_selection.txt'), 
+#             sep=',',
+#             header=None)
+        if self.train_val_test_mode == 0:
+            self.annotations = pd.read_csv(
+                os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_majority_votes_with_selection.txt'), 
+                sep=',',
+                header=None)
+        else:
+            self.annotations = pd.read_csv(
+                os.path.join(self.root_dir, 'CUB_200_2011', 'attributes', 'attributes_for_val_test.txt'), 
+                sep=',',
+                header=None)
         images = img_path.merge(img_labels, on='img_id').merge(train_val_test_split, on='img_id')
         if self.train_val_test_mode == 0:
             self.data = images[images.train_val_test == 0]
@@ -59,7 +59,10 @@ class CubImageDataset(Dataset):
                 image = self.transform(image)
             label = sample[2] - 1 # make labels start from index 0
 #             print(image, label)
-            return image, label
+            if self.train_val_test_mode == 2:
+                return image, label, sample[0]
+            else:
+                return image, label
         if self.use_annotation == True:
 #             if self.part == 0:
 #                 sample = self.data.iloc[idx]

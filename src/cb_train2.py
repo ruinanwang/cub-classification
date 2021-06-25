@@ -29,7 +29,7 @@ train_writer = SummaryWriter(log_dir="../runs/"+args.n+"/train")
 val_writer = SummaryWriter(log_dir="../runs/"+args.n+"/val")
 
 
-def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=25, num_attributes=89):
+def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_dir="../save/", batch_size=64, epochs=30, num_attributes=85):
     if args.model_name.lower() in ['alexnet', 'alex']:
         model = FinetunedAlexNet2(num_attributes) #haven't created yet
         size = (256, 256)
@@ -111,8 +111,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
         train_acc = 0
         valid_loss = 0
         print("Training...")
-        for i, data in tqdm(enumerate(train_loader)):
-            x, y = data
+        for x, y in tqdm(train_loader):
             x = x.cuda()
             y = y.type(torch.FloatTensor)
             y = y.cuda()
@@ -131,8 +130,7 @@ def train_first_model(args, train_writer, val_writer, data_dir="../data/", save_
         model.eval()
         valid_acc = 0
         print("Validating...")
-        for i, data in tqdm(enumerate(valid_loader)):
-            x, y = data
+        for x, y in tqdm(valid_loader):
             x = x.cuda()
             y = y.type(torch.FloatTensor)
             y = y.cuda()
@@ -199,8 +197,7 @@ def train_second_model(args, train_writer, val_writer, data_dir="../data/", save
         valid_loss = 0
         valid_acc = 0
         print("Training...")
-        for i, data in tqdm(enumerate(train_loader)):
-            x, y = data
+        for x, y in tqdm(train_loader):
             x = x.type(torch.FloatTensor)
             x = x.cuda()
             y = y.cuda()
@@ -216,8 +213,7 @@ def train_second_model(args, train_writer, val_writer, data_dir="../data/", save
         
         model.eval()
         print("Validating...")
-        for i, data in tqdm(enumerate(valid_loader)):
-            x, y = data
+        for x, y in tqdm(valid_loader):
             x = x.type(torch.FloatTensor)
             x = x.cuda()
             y = y.cuda()
