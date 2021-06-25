@@ -25,3 +25,14 @@ For cb_train.py training file, run `cb_train.py -n [saving_name_required] -m [1 
 `plot`: currently deprecated. We switched to tensor board which is embedded in the training files.  
 `qualitative_eval`: qualitative evaluation after experiments were run.  
 
+### Annotations
+
+Our preprocessed annotations are stored in `data/CUB_200_2011/attributes` including the original attributes file.  
+
+### Misc Tips
+
+- Use tmux: `tmux new -s mysession` `tmux a -t mysession`.  
+- If having file permission issues on VM: `sudo chmod 777 (-R) file/foldername`.  
+- VM git config problem: `git config user.name githubusernamehere``git config user.email githubemailhere`.  
+- Tensorboard: `tensorboard --logdir=runs` (default 6006).   
+- ssh tunneling: `gcloud beta compute ssh --zone "us-west1-b" "cs231n-nancy-vm"  --project "cs231n-spring2021" -- -NfL 6006:localhost:6006`, the you can open in your localhost
